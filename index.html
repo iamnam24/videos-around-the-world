@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link href='https://api.mapbox.com/mapbox-gl-js/v0.20.1/mapbox-gl.css' rel='stylesheet'/>
+<link type="text/css" rel="stylesheet" href="css/lightgallery.css" /> 
+<link rel="stylesheet" href="css/normalize.css">
+<link rel="stylesheet" href="css/skeleton.css">
+<link href="https://fonts.googleapis.com/css?family=Oswald:300,400" rel="stylesheet">
+<style type="text/css">
+
+#map {
+    
+    width:100%;
+    height:100% ;
+    position: absolute;
+    top:100%;
+}
+
+.intro{
+    
+    height:100%;
+     position: fixed;
+    left:0;
+    top:0;
+    right:0;
+    bottom: 0;
+    background-color: white;
+}
+
+.text{
+     padding-top:3%;
+     text-align: center;
+
+ }
+
+.image{
+
+     padding-top:15%;
+     text-align: center;
+
+
+}
+
+.loader{
+
+    display: none;
+}
+
+
+
+</style>
+<script src='https://api.mapbox.com/mapbox-gl-js/v0.20.1/mapbox-gl.js'></script>
+<script src='names.json'></script>
+<script>
+function onClientLoad() {
+    gapi.client.setApiKey('AIzaSyDRw8XvyMVdUavxg9m22bfB0o4eNCXh82k');
+    gapi.client.load('youtube', 'v3');
+}
+</script>
+<script src="https://apis.google.com/js/client.js?onload=onClientLoad" type="text/javascript"></script>
+<script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+<script src="js/lightgallery.js"></script>
+<script src="js/lg-video.js"></script>
+<script src="js/lg-thumbnail.min.js"></script>
+
+</head>
+
+<body>
+<div class = "intro container"> 
+<div class="row">
+<div class="twelve columns image">
+<img src="img/play.png" height="74" width="100" alt=""/>   
+</div>    
+</div>    
+<div class="row">  
+<div class="u-full-width text">
+<h1>The  Next  Era  of  Television</h1>
+</div>          
+</div>
+<div class="row">
+<div class="ten columns offset-by-one text">
+<h5>Over the past few years, internet is slowly overtaking cable television.
+Youtube has been a part of this revolution, a place where people discover new content. What are people in different countries watching?
+Check out the trending videos on the map below.</h5>
+</div>
+</div>
+<div class="row">
+<div class="ten columns offset-by-one text">    
+<button>Watch now</button>
+</div>
+</div>    
+</div>
+<div class="loader">Loading...</div>
+
+<div id='map' class="twelve columns"></div>
+
+
+
+<script>
+
+$("button").click(function(){
+$('html, body').animate({
+   scrollTop: $("#map").offset().top
+}, 1000);
+});
+
+mapboxgl.accessToken = 'pk.eyJ1IjoiaWFtbmFtMjQiLCJhIjoiY2lwcmhzbjQ5MDBvZmhjbnIxNGczcjV6ZCJ9.03Xt2j2qENN7etdY0OcTvg';
+var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/iamnam24/cipvssjl7000pbam30ml1d82a',
+   
+});
+
+map.scrollZoom.disable();
+
+if (!(map.loaded()))
+{
+  
+ 
+}
+
+
+map.on('load', function() {
+
+// the rest of the code will go in here
+map.setMaxBounds([[
+     -185,90
+     ], [ 185,-90]])
+
+map.addSource('countries', {
+
+    "type" : "geojson",
+    "data" : "countries.geo.json"
+})
+
+
+
+map.addLayer({
+
+        "id": "countries-hover",
+        "type": "fill",
+        "source": "countries",
+        "layout": {},
+        "paint": {
+            "fill-color": "#778899",
+            "fill-opacity": 0.5
+        },
+        "filter": ["==", "name", ""]
+});
+
+
+
+});
+
+map.maxZoom = 1;
+
+
+map.on("mousemove", function(e) {
+    
+
+        var features = map.queryRenderedFeatures(e.point,{layers: ["countries"] });
+        if (features.length) {
+            map.setFilter("countries-hover", ["==", "name", features[0].properties.name]);
+            //console.log(features[0].properties.name]);
+        } else {
+            map.setFilter("countries-hover", ["==", "name", ""]);
+        }
+
+    
+ 
+
+    });
+
+    // Reset the state-fills-hover layer's filter when the mouse leaves the map
+    map.on("mouseout", function() {
+        map.setFilter("state-fills-hover", ["==", "name", ""]);
+
+});
+
+
+
+map.on('click',function (e){
+
+
+var region=e.point
+console.log(region)
+
+var features=map.queryRenderedFeatures(region,{layers:["countries"]});
+//Country name is a global variable later being displayed in the slideshow
+countryName= features[0].properties.name; 
+var ISOName=getISOName(countryName); 
+console.log(ISOName);
+//Omg! Learnt about callbacks.Huzzah
+searchCountry(ISOName, function(result){
+
+video_one = result.items[0].id;
+video_two = result.items[1].id;
+video_three = result.items[2].id;
+video_four = result.items[3].id;
+video_five = result.items[4].id;
+console.log(video_one);
+displayVideo(video_one,video_two,video_three,video_four,video_five);
+killVideo();
+
+});
+
+
+});
+
+function getISOName(countryName){
+
+ //Gets the country name from the nested JSON object
+ console.log(countryName);
+for (k in data)
+{
+
+    if(countryName==data[k])
+    {
+
+        return k;
+    }
+}
+
+};
+
+function searchCountry(ISOName,serverResponse) {
+  
+    // Use the JavaScript client library to create a search.list() API call.
+    var request = gapi.client.youtube.videos.list({
+        part: 'snippet',
+        chart: 'mostPopular',
+        maxResults: 5,
+        regionCode:ISOName,
+
+    });
+    
+    // Send the request to the API server,
+    // and invoke onSearchRepsonse() with the response.
+   request.execute(function(response){
+       serverResponse(response);
+        
+    });
+
+
+   
+}
+
+
+function displayVideo(one,two,three,four,five){
+console.log(one);
+console.log(countryName);
+
+$('#map').lightGallery({
+dynamic: true,
+dynamicEl: [{
+
+            "src": 'https://www.youtube.com/watch?v='+one,
+            "subHtml":'<h2> Top 5 Videos Trending in '+countryName+'<h2>'
+
+            
+        },{
+
+
+            "src": 'https://www.youtube.com/watch?v='+two,
+            "subHtml":'<h2> Top 5 Videos Trending in '+countryName+'<h2>'
+
+        },
+        {
+
+
+            "src": 'https://www.youtube.com/watch?v='+three,
+            "subHtml":'<h2> Top 5 Videos Trending in '+countryName+'<h2>'
+
+        },
+        {
+
+            "src": 'https://www.youtube.com/watch?v='+four,
+            "subHtml":'<h2> Top 5 Videos Trending in '+countryName+'<h2>'
+
+
+        },{
+
+         "src": 'https://www.youtube.com/watch?v='+five,
+         "subHtml":'<h2> Top 5 Videos Trending in '+countryName+'<h2>'
+
+     }]
+
+});
+
+
+
+}
+
+function killVideo()
+{
+$('#map').one('onCloseAfter.lg', function(event){
+ 
+$('#map').data('lightGallery').destroy(true); 
+
+});
+
+}
+
+</script>
+
+
+</body>
+</html>
+
+
+
+
+
